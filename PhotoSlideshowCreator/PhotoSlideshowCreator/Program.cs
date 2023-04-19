@@ -7,12 +7,14 @@ class Program
     private static readonly string[] ImageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
     private static readonly string[] VideoExtensions = new[] { ".mp4", ".avi", ".mkv", ".mov", ".wmv" };
 
+    private static readonly string[] YesInputs = new[] { "y", "yes" };
+
     static void Main(string[] args)
     {
-        string currentFolder1 = Directory.GetCurrentDirectory();
-        string currentFolder = @"C:\PrivateRepos\PhotoSlideshowCreator\TestImages";
+        if (!GetSourceFolder(args, out string sourceFolder))
+            return;
 
-        var files = Directory.EnumerateFiles(currentFolder)
+        var files = Directory.EnumerateFiles(sourceFolder)
             .Where(file => IsImage(file) || IsVideo(file))
             .ToList();
 
@@ -24,12 +26,58 @@ class Program
 
         Console.WriteLine($"Found {files.Count} files. Starting to create slideshow.");
 
-        CreatePowerPoint(files, currentFolder);
+        CreatePowerPoint(files, sourceFolder);
 
         Console.WriteLine("PowerPoint created successfully!");
     }
 
-    private static void CreatePowerPoint(IEnumerable<string> files, string currentFolder)
+    private static bool GetSourceFolder(string[] args, out string sourceFolder)
+    {
+        sourceFolder = string.Empty;
+
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i] == "-s" && i + 1 < args.Length)
+            {
+                sourceFolder = args[i + 1];
+                break;
+            }
+        }
+
+        if (IsExistingFolder(sourceFolder))
+        {
+            Console.WriteLine($"Using source folder '{sourceFolder}'.");
+            return true;
+        }
+
+        Console.WriteLine("No valid source folder path provided. Paste in folderpath to use or press enter for more alternatives:");
+        var rawInput = Console.ReadLine();
+
+        if (IsExistingFolder(rawInput))
+        {
+            Console.WriteLine($"Using source folder '{sourceFolder}'.");
+            return true;
+        }
+
+        Console.WriteLine("Do you want to use the current folder? y/n");
+
+        var rawYNInput = Console.ReadLine();
+        if (YesInputs.Contains(rawYNInput.ToLower()))
+        {
+            Console.WriteLine($"Using source folder '{sourceFolder}'.");
+            return true;
+        }
+
+        Console.WriteLine("Please restart and provide a valid sourcefolder using -s followed by path.");
+        return false;
+    }
+
+    private static bool IsExistingFolder(string sourceFolder)
+    {
+        return !string.IsNullOrWhiteSpace(sourceFolder) && Directory.Exists(sourceFolder);
+    }
+
+    private static void CreatePowerPoint(IEnumerable<string> files, string sourceFolder)
     {
         var powerPointApp = new Application();
 
@@ -51,12 +99,12 @@ class Program
             }
         }
 
-        string outputPath = Path.Combine(currentFolder, GenerateUniqueFileName("output.pptx"));
-        
+        string outputPath = Path.Combine(sourceFolder, GenerateUniqueFileName("output.pptx"));
+
         presentation.SaveAs(outputPath, PpSaveAsFileType.ppSaveAsOpenXMLPresentation, Microsoft.Office.Core.MsoTriState.msoTriStateMixed);
-        
+
         presentation.Close();
-        
+
         powerPointApp.Quit();
     }
 
