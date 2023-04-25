@@ -1,4 +1,6 @@
 ﻿using Microsoft.Office.Interop.PowerPoint;
+using System.Diagnostics;
+using System.Threading.Channels;
 
 namespace PhotoSlideshowCreator;
 
@@ -50,20 +52,24 @@ class Program
             return true;
         }
 
-        Console.WriteLine("No valid source folder path provided. Paste in folderpath to use or press enter for more alternatives:");
-        var rawInput = Console.ReadLine();
+        Console.WriteLine("No valid source folder path provided.");
+        Console.WriteLine("Paste in a folderpath");
+        Console.WriteLine($"or press enter to use the current folder {Environment.CurrentDirectory}:");
+        sourceFolder = Console.ReadLine();
 
-        if (IsExistingFolder(rawInput))
+        if (IsExistingFolder(sourceFolder))
         {
             Console.WriteLine($"Using source folder '{sourceFolder}'.");
             return true;
         }
 
-        Console.WriteLine("Do you want to use the current folder? y/n");
+        Console.WriteLine("Do you want to use this folder? y/n");
 
         var rawYNInput = Console.ReadLine();
         if (YesInputs.Contains(rawYNInput.ToLower()))
         {
+            sourceFolder = Environment.CurrentDirectory;
+
             Console.WriteLine($"Using source folder '{sourceFolder}'.");
             return true;
         }
@@ -97,6 +103,13 @@ class Program
             {
                 slide.Shapes.AddMediaObject2(file, Microsoft.Office.Core.MsoTriState.msoFalse, Microsoft.Office.Core.MsoTriState.msoTrue, 0, 0, slide.Master.Width, slide.Master.Height);
             }
+
+            // Set slide transition
+            slide.SlideShowTransition.EntryEffect = PpEntryEffect.ppEffectFadeSmoothly;
+            slide.SlideShowTransition.Duration = 1; // Transition duration in seconds
+            slide.SlideShowTransition.AdvanceOnClick = Microsoft.Office.Core.MsoTriState.msoFalse;
+            slide.SlideShowTransition.AdvanceOnTime = Microsoft.Office.Core.MsoTriState.msoTrue;
+            slide.SlideShowTransition.AdvanceTime = 5; // Time before advancing to the next slide, in seconds
         }
 
         string outputPath = Path.Combine(sourceFolder, GenerateUniqueFileName("output.pptx"));
