@@ -132,7 +132,7 @@ class Program
             slide.SlideShowTransition.AdvanceTime = 5; // Time before advancing to the next slide, in seconds
         }
 
-        string outputPath = Path.Combine(sourceFolder, GenerateUniqueFileName("output.pptx"));
+        string outputPath = Path.Combine(sourceFolder, GenerateUniqueFileName("slideshow.pptx"));
 
         presentation.SaveAs(outputPath, PpSaveAsFileType.ppSaveAsOpenXMLPresentation, Microsoft.Office.Core.MsoTriState.msoTriStateMixed);
 
@@ -148,13 +148,15 @@ class Program
 
     public static string GenerateUniqueFileName(string fileName)
     {
+        var dateTime = DateTime.Now.ToString("yyyyMMdd_HHmm");
+
         int fileNumber = 1;
         string newFileName = fileName;
 
         while (File.Exists(newFileName))
         {
             fileNumber++;
-            newFileName = Path.GetFileNameWithoutExtension(fileName) + "_" + fileNumber + Path.GetExtension(fileName);
+            newFileName = Path.GetFileNameWithoutExtension(fileName) + "_"  + dateTime + "_" + fileNumber + Path.GetExtension(fileName);
         }
 
         return newFileName;
