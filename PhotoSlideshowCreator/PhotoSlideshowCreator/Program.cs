@@ -1,13 +1,10 @@
 ﻿using Microsoft.Office.Interop.PowerPoint;
-using System.Diagnostics;
-using System.Threading.Channels;
 
 namespace PhotoSlideshowCreator;
 
 class Program
 {
     private static readonly string[] ImageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
-    private static readonly string[] VideoExtensions = new[] { ".mp4", ".avi", ".mkv", ".mov", ".wmv" };
 
     private static readonly string[] YesInputs = new[] { "y", "yes" };
 
@@ -16,19 +13,21 @@ class Program
         if (!GetSourceFolder(args, out string sourceFolder))
             return;
 
-        var files = Directory.EnumerateFiles(sourceFolder)
-            .Where(file => IsImage(file) || IsVideo(file))
+        var imageFiles = Directory.EnumerateFiles(sourceFolder)
+            .Where(file => IsImage(file))
             .ToList();
 
-        if (files.Count == 0)
+        if (imageFiles.Count == 0)
         {
-            Console.WriteLine("No images or videos found in the current folder.");
+            Console.WriteLine("No images found in the current folder.");
             return;
         }
 
-        Console.WriteLine($"Found {files.Count} files. Starting to create slideshow.");
+        Console.WriteLine($"Found {imageFiles.Count} image files.");
 
-        CreatePowerPoint(files, sourceFolder);
+        Console.WriteLine($"Starting to create slideshow.");
+
+        CreatePowerPoint(imageFiles, sourceFolder);
 
         Console.WriteLine("PowerPoint created successfully!");
     }
@@ -63,7 +62,7 @@ class Program
             return true;
         }
 
-        Console.WriteLine("Do you want to use this folder? y/n");
+        Console.WriteLine($"Do you want to use current folder '{Environment.CurrentDirectory}'? y/n");
 
         var rawYNInput = Console.ReadLine();
         if (YesInputs.Contains(rawYNInput.ToLower()))
@@ -95,13 +94,34 @@ class Program
         {
             var slide = presentation.Slides.AddSlide(presentation.Slides.Count + 1, slideLayout);
 
+            // Set the background color to black
+            slide.FollowMasterBackground = Microsoft.Office.Core.MsoTriState.msoFalse;
+            slide.Background.Fill.BackColor.RGB = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Black);
+            slide.Background.Fill.ForeColor.RGB = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Black);
+            slide.Background.Fill.Visible = Microsoft.Office.Core.MsoTriState.msoTrue;
+            slide.Background.Fill.Solid();
+
             if (IsImage(file))
             {
-                slide.Shapes.AddPicture(file, Microsoft.Office.Core.MsoTriState.msoFalse, Microsoft.Office.Core.MsoTriState.msoTrue, 0, 0, slide.Master.Width, slide.Master.Height);
-            }
-            else if (IsVideo(file))
-            {
-                slide.Shapes.AddMediaObject2(file, Microsoft.Office.Core.MsoTriState.msoFalse, Microsoft.Office.Core.MsoTriState.msoTrue, 0, 0, slide.Master.Width, slide.Master.Height);
+                // Load the image to get its dimensions
+                using (var image = System.Drawing.Image.FromFile(file))
+                {
+                    float slideWidth = slide.Master.Width;
+                    float slideHeight = slide.Master.Height;
+
+                    float imageWidth = image.Width;
+                    float imageHeight = image.Height;
+
+                    float scaleFactor = Math.Min(slideWidth / imageWidth, slideHeight / imageHeight);
+                    float newWidth = imageWidth * scaleFactor;
+                    float newHeight = imageHeight * scaleFactor;
+
+                    // Calculate position to center the image on the slide
+                    float positionX = (slideWidth - newWidth) / 2;
+                    float positionY = (slideHeight - newHeight) / 2;
+
+                    slide.Shapes.AddPicture(file, Microsoft.Office.Core.MsoTriState.msoFalse, Microsoft.Office.Core.MsoTriState.msoTrue, positionX, positionY, newWidth, newHeight);
+                }
             }
 
             // Set slide transition
@@ -124,11 +144,6 @@ class Program
     private static bool IsImage(string file)
     {
         return ImageExtensions.Any(ext => file.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static bool IsVideo(string file)
-    {
-        return VideoExtensions.Any(ext => file.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
     }
 
     public static string GenerateUniqueFileName(string fileName)
