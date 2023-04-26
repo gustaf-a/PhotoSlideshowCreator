@@ -11,6 +11,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="DocumentFormat.OpenXml" Version="2.20.0" />
 		<PackageReference Include="ilmerge" Version="3.0.41" />
 		<PackageReference Include="Microsoft.Office.Interop.PowerPoint" Version="15.0.4420.1018" />
 		<PackageReference Include="MicrosoftOfficeCore" Version="15.0.0" />
