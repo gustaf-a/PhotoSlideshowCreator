@@ -1,4 +1,5 @@
 ﻿using Microsoft.Office.Interop.PowerPoint;
+using System.IO;
 
 namespace PhotoSlideshowCreator;
 
@@ -13,7 +14,7 @@ class Program
         if (!GetSourceFolder(args, out string sourceFolder))
             return;
 
-        var imageFiles = Directory.EnumerateFiles(sourceFolder)
+        var imageFiles = EnumerateFilesRecursively(sourceFolder)
             .Where(file => IsImage(file))
             .ToList();
 
@@ -24,6 +25,10 @@ class Program
         }
 
         Console.WriteLine($"Found {imageFiles.Count} image files.");
+
+        Console.WriteLine($"Do you want to shuffle the found files? y/n");
+        if (GetYesInput())
+            ShuffleList(imageFiles);
 
         Console.WriteLine($"Starting to create slideshow.");
 
@@ -54,6 +59,7 @@ class Program
         Console.WriteLine("No valid source folder path provided.");
         Console.WriteLine("Paste in a folderpath");
         Console.WriteLine($"or press enter to use the current folder {Environment.CurrentDirectory}:");
+
         sourceFolder = Console.ReadLine();
 
         if (IsExistingFolder(sourceFolder))
@@ -63,9 +69,7 @@ class Program
         }
 
         Console.WriteLine($"Do you want to use current folder '{Environment.CurrentDirectory}'? y/n");
-
-        var rawYNInput = Console.ReadLine();
-        if (YesInputs.Contains(rawYNInput.ToLower()))
+        if(GetYesInput())
         {
             sourceFolder = Environment.CurrentDirectory;
 
@@ -75,6 +79,40 @@ class Program
 
         Console.WriteLine("Please restart and provide a valid sourcefolder using -s followed by path.");
         return false;
+    }
+
+    private static bool GetYesInput()
+    {
+        var rawYNInput = Console.ReadLine();
+
+        if (string.IsNullOrWhiteSpace(rawYNInput))
+            return false;
+
+        return YesInputs.Contains(rawYNInput.ToLower());
+    }
+
+    private static IEnumerable<string> EnumerateFilesRecursively(string folderPath)
+    {
+        var files = Directory.EnumerateFiles(folderPath);
+
+        foreach (var subfolder in Directory.EnumerateDirectories(folderPath))
+        {
+            files = files.Concat(EnumerateFilesRecursively(subfolder));
+        }
+
+        return files;
+    }
+
+    private static void ShuffleList(List<string> list)
+    {
+        var random = new Random();
+
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = random.Next(i + 1);
+
+            (list[j], list[i]) = (list[i], list[j]);
+        }
     }
 
     private static bool IsExistingFolder(string sourceFolder)
