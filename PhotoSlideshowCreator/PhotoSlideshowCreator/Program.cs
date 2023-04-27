@@ -10,7 +10,7 @@ class Program
     public enum SlideShowTypes
     {
         PowerPoint,
-        OpenOffice
+        //OpenOffice Produces invalid file
     };
 
     static void Main(string[] args)
@@ -20,9 +20,16 @@ class Program
 
         GetSourceFiles(sourceData, args);
 
+        SetOutPutFolder(sourceData, slideshowOptions);
+
         PreProcessing(sourceData, slideshowOptions);
 
         CreateSlideShow(sourceData, slideshowOptions);
+    }
+
+    private static void SetOutPutFolder(SourceData sourceData, SlideshowOptions slideshowOptions)
+    {
+        slideshowOptions.OutputFolder = sourceData.SourceFolder;
     }
 
     private static void GetSourceFiles(SourceData sourceData, string[] args)
@@ -56,21 +63,23 @@ class Program
 
     private static void CreateSlideShow(SourceData sourceData, SlideshowOptions slideshowOptions)
     {
-        if (!IOHelpers.SelectEnumOption(typeof(SlideShowTypes), out SlideShowTypes selectedOption, "Select which slideshow you want to create:"))
-            return;
+        var creator = new PowerPointSlideshowCreator();
 
-        ISlideshowCreator creator = selectedOption switch
-        {
-            SlideShowTypes.PowerPoint => new PowerPointSlideshowCreator(),
-            SlideShowTypes.OpenOffice => new OpenOfficeSlideshowCreator(),
-            _ => null,
-        };
+        //if (!IOHelpers.SelectEnumOption(typeof(SlideShowTypes), out SlideShowTypes selectedOption, "Select which slideshow you want to create:"))
+        //    return;
 
-        if (creator == null)
-        {
-            Console.WriteLine("No slideshow creator selected. Exiting.");
-            return;
-        }
+        //ISlideshowCreator creator = selectedOption switch
+        //{
+        //    SlideShowTypes.PowerPoint => new PowerPointSlideshowCreator(),
+        //    SlideShowTypes.OpenOffice => new OpenOfficeSlideshowCreator(),
+        //    _ => null,
+        //};
+
+        //if (creator == null)
+        //{
+        //    Console.WriteLine("No slideshow creator selected. Exiting.");
+        //    return;
+        //}
 
         Console.WriteLine($"Starting to create slideshow.");
 
