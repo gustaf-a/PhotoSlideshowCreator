@@ -2,7 +2,7 @@
 
 internal static class IOHelpers
 {
-    private static readonly string[] ImageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
+    private static readonly string[] ImageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp" };
 
     private static readonly string[] YesInputs = new[] { "y", "yes" };
 
